@@ -1,8 +1,6 @@
 let
-	type myint = int
-	type  arrtype = array of myint
-
-	var arr1:arrtype := arrtype [10] of 0
+	type numbers = array of int
+	var x := numbers[5] of [1,2,3]
 in
 	arr1
 end

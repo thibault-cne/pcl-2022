@@ -69,7 +69,7 @@ operationNegation
 valueExp
 :   ID
     ( 
-      '(' expression ( ',' expression )* ')'
+      '(' ( expression ( ',' expression )* )? ')'
     | '[' expression ']' ( ( '[' expression ']' | '.' ID )* | 'of' expressionUnaire )
     | '.' ID ( '[' expression ']' | '.' ID )*
     | '{' ( ID '=' expression ( ',' ID '=' expression )* )? '}'
@@ -224,14 +224,7 @@ INT
 ;
 
 COMMENT
-:   (
-        '/*'
-        ()*
-        (   COMMENT
-            ()*
-        )*
-        '*/'
-    )
+:    '/*' .*? '*/' -> skip
 ;
 
 WS
