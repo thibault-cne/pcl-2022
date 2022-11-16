@@ -1,2 +1,6 @@
 # Ignore .class
-*.class
+bin
+.antlr
+images
+out
+src/
