@@ -5,90 +5,48 @@ grammar expr;
 }
 
 program
-:   exp EOF
+:   expression EOF
 ;
 
-exp
-:   orExp
-    (   ':='
-        orExp
+expression
+:   operationOu ( ':=' operationOu)?
+;
+
+operationOu
+:   operationEt ('|' operationEt)*
+;
+
+operationEt
+:   operationComparaison ('&' operationComparaison)*
+;
+
+operationComparaison
+:   operationAddition(
+    (
+        '='
+    |   '<>'
+    |   '<'
+    |   '>='
+    |   '>'
+    |   '<='
+    )
+    operationAddition
     )?
 ;
 
-orExp
-:   andExp
-    (   '|'
-        andExp
-        (   '|'
-            andExp
-        )*
-    )?
+operationAddition
+:   operationMultiplication ('+' operationMultiplication)*
+    ('-' operationMultiplication ('+' operationMultiplication)*)*
 ;
 
-andExp
-:   compExp
-    (   '&'
-        compExp
-        (   '&'
-            compExp
-        )*
-    )?
+operationMultiplication
+:   expressionUnaire  ('*' expressionUnaire)*
+    ('/' expressionUnaire('*' expressionUnaire)*)*
 ;
 
-compExp
-:   addExp
-    (   (   '='
-        |   '<>'
-        |   '<'
-        |   '>='
-        |   '>'
-        |   '<='
-        )
-        addExp
-    )?
-;
-
-addExp
-:   mulExp
-    (   '+'
-        mulExp
-        (   '+'
-            mulExp
-        )*
-    )?
-    (   '-'
-        mulExp
-        (   '+'
-            mulExp
-            (   '+'
-                mulExp
-            )*
-        )?
-    )*
-;
-
-mulExp
-:   unaryExp
-    (   '*'
-        unaryExp
-        (   '*'
-            unaryExp
-        )*
-    )?
-    (   '/'
-        unaryExp
-        (   '*'
-            unaryExp
-            (   '*'
-                unaryExp
-            )*
-        )?
-    )*
-;
-
-unaryExp
-:   seqExp
-|   negExp
+expressionUnaire
+:   sequenceInstruction
+|   operationNegation
 |   valueExp
 |   ifExp
 |   whileExp
@@ -100,100 +58,59 @@ unaryExp
 |   'break'
 ;
 
-seqExp
-:   '('
-    (   exp
-        (   ';'
-            exp
-        )*
-    )?
-    ')'
+sequenceInstruction
+:   '(' expression ( ';' expression )* ')'
 ;
 
-negExp
-:   '-'
-    unaryExp
+operationNegation
+:   '-' expressionUnaire
 ;
 
-valueExp // Gère les anciens "lValue", "callExp", "arrCreate" et "recCreate"
+valueExp
 :   ID
-    (   '('
-        (   exp
-            (   ','
-                exp
-            )*
-        )?
-        ')'
-    |   '['
-        exp
-        ']'
-        (
-            (   '['
-                exp
-                ']'
-            |   '.'
-                ID
-            )*
-        |   'of'
-            unaryExp
-        )
-    |   '.'
-        ID
-        (   '['
-            exp
-            ']'
-        |   '.'
-            ID
-        )*
-    |   '{'
-        (   ID
-            '='
-            exp
-            (   ','
-                ID
-                '='
-                exp
-            )*
-        )?
-        '}'
+    ( 
+      '(' expression ( ',' expression )* ')'
+    | '[' expression ']' ( ( '[' expression ']' | '.' ID )* | 'of' expressionUnaire )
+    | '.' ID ( '[' expression ']' | '.' ID )*
+    | '{' ( ID '=' expression ( ',' ID '=' expression )* )? '}'
     )?
 ;
 
 ifExp
 :   'if'
-    exp
+    expression
     'then'
-    unaryExp
+    expressionUnaire
     (:  'else'
-        unaryExp
+        expressionUnaire
     )?
 ;
 
 whileExp
 :   'while'
-    exp
+    expression
     'do'
-    unaryExp
+    expressionUnaire
 ;
 
 forExp
 :   'for'
     ID
     ':='
-    exp
+    expression
     'to'
-    exp
+    expression
     'do'
-    unaryExp
+    expressionUnaire
 ;
 
 letExp
 :   'let'
     dec+
     'in'
-    (   exp
+    (   expression
         (   ';'
-            exp
+            expression
         )*
     )?
     'end'
@@ -245,7 +162,7 @@ funDec
         k = ID
     )?
     '='
-    exp
+    expression
 ;
 
 varDec
@@ -255,7 +172,7 @@ varDec
         k = ID
     )?
     ':='
-    exp
+    expression
 ;
 
 ID

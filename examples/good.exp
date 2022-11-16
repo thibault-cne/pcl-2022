@@ -1,5 +1,0 @@
-let
-  function add(x: int, y: int): int = x + y
-in 
-  add(2, 3)
-end
