@@ -1,45 +1,327 @@
 grammar expr;
 
 @header{
-package parser;
+    package parser;
 }
 
+program
+:   exp EOF
+;
 
-program : 
-    instr_list EOF;
+exp
+:   orExp
+    (   ':='
+        orExp
+    )?
+;
 
-instr : 
-      affect           
-    | if_litteral       
-    | print_litteral
-    ;
+orExp
+:   andExp
+    (   '|'
+        andExp
+        (   '|'
+            andExp
+        )*
+    )?
+;
 
-print_litteral :'print' expr ';' ;
+andExp
+:   compExp
+    (   '&'
+        compExp
+        (   '&'
+            compExp
+        )*
+    )?
+;
 
+compExp
+:   addExp
+    (   (   '='
+        |   '<>'
+        |   '<'
+        |   '>='
+        |   '>'
+        |   '<='
+        )
+        addExp
+    )?
+;
 
-if_litteral : 
-      'if' '('expr')' '{'instr_list'}' 'else' '{'instr_list'}'    #IfThenElse
-    | 'if' '('expr')' '{'instr_list'}'                            #IfThen
-    ;
+addExp
+:   mulExp
+    (   '+'
+        mulExp
+        (   '+'
+            mulExp
+        )*
+    )?
+    (   '-'
+        mulExp
+        (   '+'
+            mulExp
+            (   '+'
+                mulExp
+            )*
+        )?
+    )*
+;
 
-instr_list : instr+;
+mulExp
+:   unaryExp
+    (   '*'
+        unaryExp
+        (   '*'
+            unaryExp
+        )*
+    )?
+    (   '/'
+        unaryExp
+        (   '*'
+            unaryExp
+            (   '*'
+                unaryExp
+            )*
+        )?
+    )*
+;
 
-affect : IDF '=' expr ';' ;
+unaryExp
+:   seqExp
+|   negExp
+|   valueExp
+|   ifExp
+|   whileExp
+|   forExp
+|   letExp
+|   STR
+|   INT
+|   'nil'
+|   'break'
+;
 
-expr : plus; 
+seqExp
+:   '('
+    (   exp
+        (   ';'
+            exp
+        )*
+    )?
+    ')'
+;
 
-plus:  mult (('+'|'-') mult)*;
+negExp
+:   '-'
+    unaryExp
+;
 
-mult : value (('*'|'/') value)*;
+valueExp // Gère les anciens "lValue", "callExp", "arrCreate" et "recCreate"
+:   ID
+    (   '('
+        (   exp
+            (   ','
+                exp
+            )*
+        )?
+        ')'
+    |   '['
+        exp
+        ']'
+        (
+            (   '['
+                exp
+                ']'
+            |   '.'
+                ID
+            )*
+        |   'of'
+            unaryExp
+        )
+    |   '.'
+        ID
+        (   '['
+            exp
+            ']'
+        |   '.'
+            ID
+        )*
+    |   '{'
+        (   ID
+            '='
+            exp
+            (   ','
+                ID
+                '='
+                exp
+            )*
+        )?
+        '}'
+    )?
+;
 
-value :   INT           #Integer
-        | IDF           #Identifier
-        | '('expr')'    #Parenthesis
-        ;
+ifExp
+:   'if'
+    exp
+    'then'
+    unaryExp
+    (:  'else'
+        unaryExp
+    )?
+;
 
+whileExp
+:   'while'
+    exp
+    'do'
+    unaryExp
+;
 
-INT : ('0'..'9')+;
+forExp
+:   'for'
+    ID
+    ':='
+    exp
+    'to'
+    exp
+    'do'
+    unaryExp
+;
 
-IDF : ('a'..'z'|'A'..'Z'|'_')('a'..'z'|'A'..'Z'|'0'..'9')*;
+letExp
+:   'let'
+    dec+
+    'in'
+    (   exp
+        (   ';'
+            exp
+        )*
+    )?
+    'end'
+;
 
-WS : ('\n'|' '|'\t'|'\r')+ -> skip;
+dec
+:   tyDec
+|   funDec
+|   varDec
+;
+
+tyDec
+:   'type'
+    ID
+    '='
+    (   ID
+    |   'array'
+        'of'
+        ID
+    |   '{'
+        (   ID
+            ':'
+            ID
+            (   ','
+                ID
+                ':'
+                ID
+            )*
+        )?
+        '}'
+    )
+;
+
+funDec
+:   'function'
+    ID
+    '('
+    (   i += ID
+        ':'
+        j += ID
+        (   ','
+            i += ID
+            ':'
+            j += ID
+        )*
+    )?
+    ')'
+    (   ':'
+        k = ID
+    )?
+    '='
+    exp
+;
+
+varDec
+:   'var'
+    ID
+    (   ':'
+        k = ID
+    )?
+    ':='
+    exp
+;
+
+ID
+:   (   'A'..'Z'
+    |   'a'..'z'
+    )
+    (   '0'..'9'
+    |   'A'..'Z'
+    |   '_'
+    |   'a'..'z'
+    )*
+;
+
+STR
+:   '"'
+    (   ' '..'!'
+    |   '#'..'['
+    |   ']'..'~'
+    |   '\\'
+        (   'n'
+        |   't'
+        |   '"'
+        |   '\\'
+        |   '^'
+            '@'..'_'
+        |   '0' // Nombre ASCII partie 1 (commencant par 0)
+            '0'..'9'
+            '0'..'9'
+        |   '1' // Nombre ASCII partie 2 (commencant par 1)
+            (   '0'..'1'
+                '0'..'9'
+            |   '2'
+                '0'..'7'
+            )
+        |   (   ' ' // Échappement de caractères blancs
+            |   '\t'
+            |   '\n'
+            |   '\r'
+            |   '\f'
+            )+
+            '\\'
+        )
+    )*
+    '"'
+;
+
+INT
+:   '0'..'9'+
+;
+
+COMMENT
+:   (
+        '/*'
+        ()*
+        (   COMMENT
+            ()*
+        )*
+        '*/'
+    )
+;
+
+WS
+:   (   ' '
+    |   '\t'
+    |   '\n'
+    |   '\r'
+    |   '\f'
+    )+ -> skip
+;
