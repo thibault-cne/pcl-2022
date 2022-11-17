@@ -3,4 +3,4 @@ bin
 .antlr
 images
 out
-src/
+src/parser
