@@ -67,15 +67,15 @@ expressionValeur
 ;
 
 operationSi
-:   'if' expression 'then' expressionUnaire ( 'else' expressionUnaire )?
+:   'if' expression 'then' expression ( 'else' expression )?
 ;
 
 operationTantque
-:   'while' expression 'do' expressionUnaire
+:   'while' expression 'do' expression
 ;
 
 operationBoucle
-:   'for' ID ':=' expression 'to' expression 'do' expressionUnaire
+:   'for' ID ':=' expression 'to' expression 'do' expression
 ;
 
 definition

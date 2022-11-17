@@ -1,4 +1,6 @@
 import java.util.Arrays;
+
+import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 
@@ -12,10 +14,9 @@ import org.antlr.v4.runtime.RecognitionException;
 
 import parser.*;   
 import parser.exprParser.ProgramContext;
-
+import java.awt.event.MouseListener;
 
 public class Main {
-
     public static void main(String[] args){
 
         if (args.length < 1){
@@ -25,38 +26,7 @@ public class Main {
 
         String testFile = args[0];
 
-        try {
-
-            //chargement du fichier et construction du parser
-            CharStream input = CharStreams.fromFileName(testFile);
-            exprLexer lexer = new exprLexer(input); 
-            CommonTokenStream stream = new CommonTokenStream(lexer);
-            exprParser parser = new exprParser(stream);
-
-            ProgramContext program = parser.program();
-
-            // code d'affichage de l'arbre syntaxique
-            JFrame frame = new JFrame("Antlr AST");
-            JPanel panel = new JPanel();
-            TreeViewer viewer = new TreeViewer(Arrays.asList(
-                    parser.getRuleNames()),program);
-            viewer.setScale(0.75); // Scale a little
-            panel.add(viewer);
-            frame.add(panel);
-            frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-            frame.pack();
-            frame.setVisible(true);
-
-
-        } 
-        catch (IOException e) {
-            e.printStackTrace();
-            System.out.println("erreur io");
-        }
-        catch (RecognitionException e) {
-            e.printStackTrace();
-            System.out.println("erreur de reconnaissance");
-        }
+        new Parser(testFile);
     }
     
 }
